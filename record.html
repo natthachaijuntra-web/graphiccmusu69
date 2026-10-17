@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>บันทึกข้อมูล | ทีมกราฟิก ฝ่ายประชาสัมพันธ์และสารสนเทศ ส.มช.69</title><link rel="icon" type="image/png" href="logo.png"><link rel="stylesheet" href="style.css"></head><body>
+<main style="max-width:820px"><div class="seg"><button class="btn o on" data-f="fe">บันทึกกิจกรรม</button><button class="btn o" data-f="fm">บันทึกการประชุม</button></div>
+<form id="fe" class="card" novalidate>
+<label>หัวข้อ</label><select name="category" required></select>
+<div id="oth" hidden><label>ระบุกิจกรรม</label><input name="otherName"></div>
+<label>ชื่อกิจกรรม</label><input name="title" required>
+<label>วันที่ *ใส่เป็น ค.ศ.</label><input type="date" name="date" required>
+<label class="ck" style="margin-top:12px"><input type="checkbox" name="allDay"> กิจกรรมตลอดทั้งวัน</label>
+<div class="row" id="tm"><div><label>เวลาเริ่ม</label><input type="time" name="start"></div><div><label>เวลาสิ้นสุด</label><input type="time" name="end"></div></div>
+<label>รูปแบบ</label><div style="display:flex;gap:20px"><label class="ck"><input type="radio" name="mode" value="onsite" checked> Onsite</label><label class="ck"><input type="radio" name="mode" value="online"> Online</label></div>
+<label id="pl">สถานที่</label><input name="place" required>
+<label>ผู้บันทึก</label><select name="recorder" class="mem" required></select>
+<div class="msg"></div><p><button class="btn"><span data-i="check"></span> บันทึกกิจกรรม</button></p></form>
+<form id="fm" class="card" novalidate hidden>
+<label>ชื่อกิจกรรม</label><input name="title" required>
+<label>โลโก้กิจกรรม (.png เท่านั้น)</label><input type="file" name="logo" accept="image/png" required>
+<div class="row"><div><label>วันที่ประชุม *ใส่เป็น ค.ศ.</label><input type="date" name="meetingDate" required></div><div><label>วันที่บันทึก *ใส่เป็น ค.ศ.</label><input type="date" name="recordDate" required></div></div>
+<div id="ags"></div>
+<label>รายละเอียดการประชุม</label>
+<div class="tb"><button type="button" data-c="bold"><b>B</b></button><button type="button" data-c="italic"><i>I</i></button><button type="button" data-c="underline"><u>U</u></button>
+<select id="fs"><option value="3">ขนาดปกติ</option><option value="2">เล็ก</option><option value="5">ใหญ่</option><option value="7">ใหญ่มาก</option></select><input type="color" id="fc" value="#12263f" title="สีตัวอักษร"></div>
+<div class="ed" id="ed" contenteditable></div>
+<label>แนบไฟล์ (ไม่บังคับ · .pdf, .png ไม่เกิน 10 ไฟล์)</label><input type="file" name="files" accept=".pdf,.png,application/pdf,image/png" multiple>
+<label>ผู้บันทึก</label><select name="recorder" class="mem" required></select>
+<div class="msg"></div><p><button class="btn"><span data-i="check"></span> บันทึกการประชุม</button></p></form></main>
+<script src="app.js"></script><script>
+layout('record.html');
+const fe=$('#fe'),fm=$('#fm'),AG=['เรื่องที่แจ้งให้ที่ประชุมทราบ','รับรองรายงานการประชุม','เรื่องสืบเนื่อง','เรื่องพิจารณา','เรื่องอื่น ๆ'];
+fe.category.innerHTML=CATS.map(c=>`<option>${c}</option>`).join('');
+document.querySelectorAll('.mem').forEach(s=>s.innerHTML='<option value="">-- เลือกผู้บันทึก --</option>'+MEMBERS.map(m=>`<option>${m}</option>`).join(''));
+$('#ags').innerHTML=AG.map((a,i)=>`<label>วาระที่ ${i+1} ${a}</label><textarea rows="2" name="ag${i}" placeholder="หากไม่มี เว้นว่างไว้ ระบบจะแสดงเป็น “ไม่มี”"></textarea>`).join('');
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on',x==b));fe.hidden=b.dataset.f!='fe';fm.hidden=b.dataset.f!='fm'});
+if(location.hash=='#meeting')document.querySelector('[data-f=fm]').click();
+function sync(){const a=fe.allDay.checked,o=fe.category.value=='อื่นๆ',on=fe.mode.value=='onsite';
+  $('#tm').hidden=a;$('#oth').hidden=!o;$('#pl').textContent=on?'สถานที่':'ช่องทางออนไลน์ (เช่น Zoom, Google Meet)'}
+fe.oninput=fe.onchange=sync;sync();
+function show(f,t,c){const m=$('.msg',f);m.className='msg '+c;m.innerHTML=t}
+function check(f,extra=[]){let ok=true;f.querySelectorAll('input,select').forEach(i=>i.classList.remove('bad'));
+  const req=[...f.querySelectorAll('[required]')];
+  if(f==fe){if(fe.category.value=='อื่นๆ')req.push(fe.otherName);if(!fe.allDay.checked)req.push(fe.start,fe.end)}
+  req.forEach(i=>{if(!(i.type=='file'?i.files.length:i.value.trim())){i.classList.add('bad');ok=false}});
+  extra.forEach(e=>{if(!e[0]){e[1].classList.add('bad');ok=false}});return ok}
+fe.onsubmit=async e=>{e.preventDefault();
+  if(!check(fe)||(!fe.allDay.checked&&fe.end.value<=fe.start.value))return show(fe,ic('alert')+' กรุณากรอกข้อมูลให้ครบทุกช่อง (เวลาสิ้นสุดต้องหลังเวลาเริ่ม)','e');
+  const d={};['category','otherName','title','date','mode','place','recorder'].forEach(k=>d[k]=fe[k].value.trim?fe[k].value.trim():fe[k].value);
+  d.mode=fe.mode.value;d.allDay=fe.allDay.checked;d.start=d.allDay?'':fe.start.value;d.end=d.allDay?'':fe.end.value;if(d.category!='อื่นๆ')d.otherName='';
+  try{await API.save('events',d);show(fe,ic('check')+' บันทึกกิจกรรมเรียบร้อย <a href="index.html">ดูในปฏิทิน</a>','s');fe.reset();sync()}catch(x){show(fe,ic('x')+' '+esc(x.message),'e')}};
+const rd=f=>new Promise((r,j)=>{const x=new FileReader();x.onload=()=>r({name:f.name,type:f.type,data:x.result});x.onerror=j;x.readAsDataURL(f)});
+document.querySelectorAll('.tb button').forEach(b=>b.onmousedown=e=>{e.preventDefault();document.execCommand(b.dataset.c)});
+$('#fs').onchange=e=>{$('#ed').focus();document.execCommand('fontSize',false,e.target.value)};
+$('#fc').oninput=e=>{$('#ed').focus();document.execCommand('foreColor',false,e.target.value)};
+fm.onsubmit=async e=>{e.preventDefault();const ed=$('#ed'),fl=[...fm.files.files],lg=fm.logo.files[0];
+  ed.classList.toggle('bad',!ed.innerText.trim());
+  const ok=check(fm)&&ed.innerText.trim();
+  if(!ok)return show(fm,ic('alert')+' กรุณากรอกข้อมูลให้ครบทุกช่อง (รวมรายละเอียดการประชุม)','e');
+  if(lg.type!='image/png')return show(fm,ic('alert')+' โลโก้ต้องเป็นไฟล์ .png เท่านั้น','e');
+  if(fl.length>10||fl.some(f=>!['application/pdf','image/png'].includes(f.type)))return show(fm,ic('alert')+' แนบได้เฉพาะ .pdf / .png ไม่เกิน 10 ไฟล์','e');
+  show(fm,'กำลังบันทึก...','s');
+  try{const d={title:fm.title.value.trim(),logo:await rd(lg),meetingDate:fm.meetingDate.value,recordDate:fm.recordDate.value,
+    agendas:AG.map((_,i)=>fm['ag'+i].value.trim()||'ไม่มี'),detail:ed.innerHTML,files:await Promise.all(fl.map(rd)),recorder:fm.recorder.value};
+    await API.save('meetings',d);show(fm,ic('check')+' บันทึกการประชุมเรียบร้อย <a href="meetingrc.html">ดูรายงานการประชุม</a>','s');fm.reset();ed.innerHTML=''}
+  catch(x){show(fm,ic('x')+' '+esc(x.message),'e')}};
+</script></body></html>

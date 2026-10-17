@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>เอกสารรายงานการประชุม | ทีมกราฟิก ฝ่ายประชาสัมพันธ์และสารสนเทศ ส.มช.69</title><link rel="icon" type="image/png" href="logo.png"><link rel="stylesheet" href="style.css"></head><body>
+<main><div class="tabs" id="tabs"></div><section class="card" id="box"><div class="empty">กำลังโหลด...</div></section></main>
+<script src="app.js"></script><script>
+layout('meetingrc.html');
+const AG=['เรื่องที่แจ้งให้ที่ประชุมทราบ','รับรองรายงานการประชุม','เรื่องสืบเนื่อง','เรื่องพิจารณา','เรื่องอื่น ๆ'];
+let L=[],sel=null;
+const clean=h=>{const d=new DOMParser().parseFromString(h,'text/html');d.querySelectorAll('script,iframe,object,embed,style').forEach(e=>e.remove());
+  d.body.querySelectorAll('*').forEach(e=>[...e.attributes].forEach(a=>/^on/i.test(a.name)&&e.removeAttribute(a.name)));return d.body.innerHTML};
+function open(i){const m=L[i];sel=m.id;const ag=parse(m.agendas),fs=parse(m.files);
+  document.querySelectorAll('.tab').forEach((t,k)=>t.classList.toggle('on',k==i));
+  $('#box').innerHTML=`<div style="display:flex;gap:16px;align-items:center"><img src="${esc(m.logo)}" style="width:72px;height:72px;object-fit:contain"><div><h2 style="margin:0;color:var(--bd)">${esc(m.title)}</h2>
+  <p class="sub" style="margin:4px 0 0">${ic('cal')} วันที่ประชุม ${thDate(m.meetingDate)} · วันที่บันทึก ${thDate(m.recordDate)}<br>${ic('user')} ผู้บันทึก: <b>${esc(m.recorder)}</b></p></div></div>
+  <h2 style="margin-bottom:0"><b>วาระการประชุม</b></h2>${AG.map((a,k)=>`<div class="ag"><h3><b>วาระที่ ${k+1} ${a}</b></h3><div style="white-space:pre-wrap">${esc(ag[k]||'ไม่มี')}</div></div>`).join('')}
+  <h3><b>รายละเอียดการประชุม</b></h3><div>${clean(m.detail)}</div>
+  <h3><b>เอกสารแนบ</b></h3>${fs.length?'':'<p class="sub">ไม่มีเอกสารแนบ</p>'}${fs.map(f=>`<p><b>${esc(f.name)}</b> · <a href="${esc(f.url)}" target="_blank">${ic('ext')} เปิดในแท็บใหม่</a></p>`+(f.type=='application/pdf'?`<iframe class="view" src="${esc(f.url)}"></iframe>`:`<img class="view" src="${esc(f.url)}" alt="">`)).join('')}`}
+watch('meetings',l=>{L=l.sort((a,b)=>String(b.meetingDate).localeCompare(String(a.meetingDate)));
+  if(!L.length){sel=null;$('#tabs').innerHTML='';$('#box').innerHTML='<div class="empty">ยังไม่มีรายงานการประชุมที่บันทึกไว้ <a href="record.html#meeting">บันทึกการประชุม</a></div>';return}
+  $('#tabs').innerHTML=L.map((m,i)=>`<button class="tab" data-i="${i}"><img src="${esc(m.logo)}" alt=""><span><b>${esc(m.title)}</b><small>${thDate(m.meetingDate,{day:'numeric',month:'short',year:'numeric'})}</small></span></button>`).join('');
+  let k=L.findIndex(m=>m.id==sel);open(k<0?0:k)});
+$('#tabs').onclick=e=>{const t=e.target.closest('.tab');if(t)open(t.dataset.i)};
+</script></body></html>
