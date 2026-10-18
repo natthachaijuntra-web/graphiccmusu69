@@ -7,7 +7,9 @@ const pad = n => String(n).padStart(2, '0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const thDate = (s, o = { day: 'numeric', month: 'long', year: 'numeric' }) => { const d = new Date(s + 'T00:00'); return isNaN(d) ? '-' : d.toLocaleDateString('th-TH', o); };
 // แปลงค่าวันที่จาก Sheet (เช่น 2026-10-17T17:00:00.000Z) ให้เป็น YYYY-MM-DD ตามเวลาท้องถิ่น
-const fixRow = r => { ['date', 'meetingDate', 'recordDate'].forEach(k => { const v = String(r[k] ?? '').trim(); if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) { const d = new Date(v); if (!isNaN(d)) r[k] = ymd(d); } }); return r; };
+// แปลงเวลาจาก Sheet (14:30:00 หรือ ISO) ให้เป็น HH:mm
+const hm = v => { v = String(v ?? '').trim(); if (/^\d{4}-\d{2}-\d{2}T/.test(v)) { const d = new Date(v); return isNaN(d) ? '' : pad(d.getHours()) + ':' + pad(d.getMinutes()); } const m = v.match(/(\d{1,2}):(\d{2})/); return m ? pad(+m[1]) + ':' + m[2] : ''; };
+const fixRow = r => { ['date', 'meetingDate', 'recordDate'].forEach(k => { const v = String(r[k] ?? '').trim(); if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) { const d = new Date(v); if (!isNaN(d)) r[k] = ymd(d); } }); ['start', 'end'].forEach(k => r[k] = hm(r[k])); return r; };
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const parse = v => { try { return typeof v === 'string' ? JSON.parse(v) : v; } catch { return []; } };
 const ICON={
@@ -28,12 +30,12 @@ sync:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21
 db:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0"/>',
 copy:'<circle cx="12" cy="12" r="10"/><path d="M15 9.5a4 4 0 1 0 0 5"/>'};
 const ic=n=>`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[n]}</svg>`;
-const PAGES={'index.html':['ตารางกิจกรรม','ปฏิทินกิจกรรมรวมของทีมกราฟิก สโมสรนักศึกษา มหาวิทยาลัยเชียงใหม่','cal','หน้าหลัก','home'],
+const PAGES={'index.html':['ตารางกิจกรรม','ปฏิทินกิจกรรมรวมของทีมกราฟิก ฝ่ายประชาสัมพันธ์และสารสนเทศ ส.มช.69','cal','หน้าหลัก','home'],
 'record.html':['บันทึกข้อมูล','กรอกข้อมูลให้ครบทุกช่องก่อนกดบันทึก','pen','บันทึกข้อมูล','pen'],
 'meetingrc.html':['รายงานการประชุม','เลือกกิจกรรมเพื่อดูรายงานการประชุมที่บันทึกไว้','doc','รายงานการประชุม','doc']};
 function layout(active) {
   const nav=Object.entries(PAGES).map(([h,p])=>`<a href="${h}" class="${h==active?'on':''}">${ic(p[4])}<span>${p[3]}</span></a>`).join('');
-  document.body.insertAdjacentHTML('afterbegin', `<header><div class="nav"><a class="brand" href="index.html"><img src="logo.png" alt="logo"><span>ทีมกราฟิก สโมสรนักศึกษา<small>มหาวิทยาลัยเชียงใหม่</small></span></a><nav>${nav}</nav><button id="st" class="st" title="คลิกเพื่อตั้งค่าการเชื่อมต่อ Google Sheet"></button></div></header>`);
+  document.body.insertAdjacentHTML('afterbegin', `<header><div class="nav"><a class="brand" href="index.html"><img src="logo.png" alt="logo"><span>ทีมกราฟิก ทีมกราฟิก ฝ่ายประชาสัมพันธ์และสารสนเทศ<small>สโมสรนักศึกษา มหาวิทยาลัยเชียงใหม่ ประจำปี 2569</small></span></a><nav>${nav}</nav><button id="st" class="st" title="คลิกเพื่อตั้งค่าการเชื่อมต่อ Google Sheet"></button></div></header>`);
   $('#st').onclick=()=>{const u=prompt('วาง URL ของ Apps Script Web App (เว้นว่างเพื่อใช้โหมดทดลอง)',APPS_URL);if(u===null)return;u.trim()?localStorage.setItem('cmu_apps_url',u.trim()):localStorage.removeItem('cmu_apps_url');location.reload()};
   const p=PAGES[active];
   $('header').insertAdjacentHTML('afterend', `<section class="hero"><div class="in"><span class="hi">${ic(p[2])}</span><div><h1>${p[0]}</h1><p>${p[1]}</p></div></div></section>`);
