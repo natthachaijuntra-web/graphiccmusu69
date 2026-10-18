@@ -35,7 +35,7 @@ const PAGES={'index.html':['ตารางกิจกรรม','ปฏิท�
 'meetingrc.html':['รายงานการประชุม','เลือกกิจกรรมเพื่อดูรายงานการประชุมที่บันทึกไว้','doc','รายงานการประชุม','doc']};
 function layout(active) {
   const nav=Object.entries(PAGES).map(([h,p])=>`<a href="${h}" class="${h==active?'on':''}">${ic(p[4])}<span>${p[3]}</span></a>`).join('');
-  document.body.insertAdjacentHTML('afterbegin', `<header><div class="nav"><a class="brand" href="index.html"><img src="logo.png" alt="logo"><span>ทีมกราฟิก ทีมกราฟิก ฝ่ายประชาสัมพันธ์และสารสนเทศ<small>สโมสรนักศึกษา มหาวิทยาลัยเชียงใหม่ ประจำปี 2569</small></span></a><nav>${nav}</nav><button id="st" class="st" title="คลิกเพื่อตั้งค่าการเชื่อมต่อ Google Sheet"></button></div></header>`);
+  document.body.insertAdjacentHTML('afterbegin', `<header><div class="nav"><a class="brand" href="index.html"><img src="logo.png" alt="logo"><span>ทีมกราฟิก ฝ่ายประชาสัมพันธ์และสารสนเทศ<small>สโมสรนักศึกษา มหาวิทยาลัยเชียงใหม่ ประจำปี 2569</small></span></a><nav>${nav}</nav><button id="st" class="st" title="คลิกเพื่อตั้งค่าการเชื่อมต่อ Google Sheet"></button></div></header>`);
   $('#st').onclick=()=>{const u=prompt('วาง URL ของ Apps Script Web App (เว้นว่างเพื่อใช้โหมดทดลอง)',APPS_URL);if(u===null)return;u.trim()?localStorage.setItem('cmu_apps_url',u.trim()):localStorage.removeItem('cmu_apps_url');location.reload()};
   const p=PAGES[active];
   $('header').insertAdjacentHTML('afterend', `<section class="hero"><div class="in"><span class="hi">${ic(p[2])}</span><div><h1>${p[0]}</h1><p>${p[1]}</p></div></div></section>`);
