@@ -2,12 +2,12 @@
 <title>ตารางกิจกรรม | ทีมกราฟิก ฝ่ายประชาสัมพันธ์และสารสนเทศ ส.มช.69</title><link rel="icon" type="image/png" href="logo.png"><link rel="stylesheet" href="style.css"></head><body>
 <main><div class="grid"><section class="card"><div class="bar"><button class="btn o" id="pv" aria-label="ก่อนหน้า"><span data-i="left"></span></button><h2 id="tt"></h2><button class="btn o" id="nx" aria-label="ถัดไป"><span data-i="right"></span></button><button class="btn o" id="td">วันนี้</button>
 <span id="vs"><button class="btn o" data-v="day">รายวัน</button> <button class="btn o" data-v="week">รายสัปดาห์</button> <button class="btn o" data-v="month">รายเดือน</button></span></div><div id="cal"></div></section>
-<aside class="card"><h2 style="margin-top:0"><span data-i="bell"></span> กิจกรรมใน 24 ชั่วโมงข้างหน้า</h2><div id="up"></div><a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:12px" href="record.html"><span data-i="plus"></span> เพิ่มกิจกรรม</a></aside></div></main>
+<aside class="card"><h2 style="margin-top:0"><span data-i="bell"></span> กิจกรรมที่จะมาถึง...</h2><div id="up"></div><a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:12px" href="record.html"><span data-i="plus"></span> เพิ่มกิจกรรม</a></aside></div></main>
 <dialog id="dg"></dialog>
 <script src="app.js"></script><script>
 layout('index.html');
 let view='month',cur=new Date(),evs=[];const DN=['อา','จ','อ','พ','พฤ','ศ','ส'];
-const bool=v=>String(v)=='true';
+const bool=v=>String(v).toLowerCase()=='true';
 const cat=e=>e.category=='อื่นๆ'?'อื่นๆ: '+e.otherName:e.category;
 const ci=e=>'c'+(CATS.indexOf(e.category)+1);
 const tm=e=>bool(e.allDay)?'ตลอดทั้งวัน':`${e.start} - ${e.end} น.`;
@@ -29,15 +29,15 @@ function render(){
   h.innerHTML=`<div class="cal">${o}</div>`}
 function upcoming(){
   const now=new Date(),lim=new Date(+now+864e5);
-  const l=evs.map(e=>{const st=new Date(e.date+'T'+(bool(e.allDay)?'00:00':e.start)),en=new Date(e.date+'T'+(bool(e.allDay)?'23:59':e.end));return{e,st,en}})
-   .filter(x=>x.en>=now&&x.st<=lim).sort((a,b)=>a.st-b.st);
-  $('#up').innerHTML=l.length?l.map(({e})=>`<div class="item"><b>${esc(e.title)}</b><p>${thDate(e.date,{day:'numeric',month:'short'})} · ${tm(e)}</p><p>${where(e)}</p></div>`).join(''):'<div class="empty">ไม่มีกิจกรรมที่กำลังจะมาถึงใน 24 ชั่วโมง</div>'}
+  const l=evs.map(e=>{const ad=bool(e.allDay),st=new Date(e.date+'T'+(ad?'00:00':e.start||'00:00')),en=new Date(e.date+'T'+(ad?'23:59:59':e.end||e.start||'23:59'));return{e,st,en}})
+   .filter(x=>!isNaN(x.st)&&!isNaN(x.en)&&x.en>=now&&x.st<=lim).sort((a,b)=>a.st-b.st);
+  $('#up').innerHTML=l.length?l.map(({e,st})=>`<div class="item"><b>${esc(e.title)}</b><p>${thDate(e.date,{day:'numeric',month:'short'})} · ${tm(e)}${st<=now?' · กำลังดำเนินอยู่':''}</p><p>${where(e)}</p></div>`).join(''):'<div class="empty">ไม่มีกิจกรรมที่กำลังจะมาถึงใน 24 ชั่วโมง</div>'}
 function step(k){const d=new Date(cur);if(view=='month')d.setMonth(d.getMonth()+k);else d.setDate(d.getDate()+k*(view=='week'?7:1));cur=d;render()}
 $('#pv').onclick=()=>step(-1);$('#nx').onclick=()=>step(1);$('#td').onclick=()=>{cur=new Date();render()};
 $('#vs').onclick=e=>{if(e.target.dataset.v){view=e.target.dataset.v;render()}};
 $('#cal').onclick=e=>{const c=e.target.closest('[data-id]'),x=c&&evs.find(v=>v.id==c.dataset.id),cell=e.target.closest('[data-d]');
   if(x){$('#dg').innerHTML=`<h2 style="margin-top:0;color:var(--bd)">${esc(x.title)}</h2><p><b>ประเภท:</b> ${esc(cat(x))}</p><p><b>วันที่:</b> ${thDate(x.date)}<br><b>เวลา:</b> ${tm(x)}</p><p>${where(x)}</p><p><b>ผู้บันทึก:</b> ${esc(x.recorder)}</p><button class="btn" onclick="dg.close()">ปิด</button>`;dg.showModal()}
   else if(cell){cur=new Date(cell.dataset.d+'T00:00');view='day';render()}};
-API.list('events').then(l=>{evs=l;render();upcoming()}).catch(()=>$('#cal').innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>');
+watch('events',l=>{evs=l;render();upcoming()});
 setInterval(upcoming,6e4);
 </script></body></html>
