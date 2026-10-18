@@ -1,5 +1,5 @@
-@font-face{font-family:CMU;src:url(fonts/CMU-Regular.ttf);font-weight:400}
-@font-face{font-family:CMU;src:url(fonts/CMU-Bold.ttf);font-weight:700}
+@font-face{font-family:CMU;src:url(fonts/CMU-Regular.woff);font-weight:400}
+@font-face{font-family:CMU;src:url(fonts/CMU-Bold.woff);font-weight:700}
 :root{--b:#1e88e5;--bd:#0d47a1;--bl:#e8f3fe;--t:#12263f;--m:#5f7690;--ln:#dbe8f6;--sh:0 10px 30px rgba(13,71,161,.10)}
 *{box-sizing:border-box}
 body{margin:0;font-family:CMU,Sarabun,sans-serif;color:var(--t);background:#f3f8fe;min-height:100vh;font-size:17px;display:flex;flex-direction:column}
